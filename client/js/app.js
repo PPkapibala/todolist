@@ -1,6 +1,12 @@
 (function () {
   'use strict';
 
+  // --- Auth DOM ---
+  const loginPage = document.getElementById('loginPage');
+  const githubLoginBtn = document.getElementById('githubLoginBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const userInfo = document.getElementById('userInfo');
+
   // --- DOM Elements ---
   const themeToggle = document.getElementById('themeToggle');
   const menuToggle = document.getElementById('menuToggle');
@@ -540,8 +546,55 @@
     });
   }
 
+  // --- Auth UI ---
+  function showApp(session) {
+    const user = auth.getUser(session);
+    loginPage.style.display = 'none';
+    appEl.style.display = '';
+
+    if (user) {
+      userInfo.innerHTML = '';
+      const wrapper = document.createElement('div');
+      wrapper.className = 'user-info-inner';
+      if (user.avatar) {
+        const img = document.createElement('img');
+        img.src = user.avatar;
+        img.alt = user.name;
+        img.className = 'user-avatar';
+        wrapper.appendChild(img);
+      }
+      const name = document.createElement('span');
+      name.className = 'user-name';
+      name.textContent = user.name;
+      wrapper.appendChild(name);
+      userInfo.appendChild(wrapper);
+    }
+  }
+
+  function showLogin() {
+    loginPage.style.display = 'flex';
+    appEl.style.display = 'none';
+  }
+
   // --- Event Listeners ---
   function bindEvents() {
+    githubLoginBtn.addEventListener('click', async () => {
+      try {
+        await auth.signInWithGitHub();
+      } catch (err) {
+        showSnackbar('登录失败：' + err.message);
+      }
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+      userDropdown.classList.remove('active');
+      try {
+        await auth.signOut();
+      } catch (err) {
+        showSnackbar('退出失败：' + err.message);
+      }
+    });
+
     themeToggle.addEventListener('click', toggleTheme);
 
     menuToggle.addEventListener('click', () => {
@@ -603,10 +656,28 @@
   }
 
   // --- Init ---
-  function init() {
+  const appEl = document.getElementById('app');
+
+  async function init() {
     initTheme();
     bindEvents();
-    loadTodos();
+
+    const session = await auth.getSession();
+    if (session) {
+      showApp(session);
+      loadTodos();
+    } else {
+      showLogin();
+    }
+
+    auth.onAuthStateChange((session) => {
+      if (session) {
+        showApp(session);
+        loadTodos();
+      } else {
+        showLogin();
+      }
+    });
   }
 
   init();

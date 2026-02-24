@@ -50,6 +50,106 @@ body {
   transition: background var(--transition), color var(--transition);
 }
 
+/* ===== Login Page ===== */
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.login-card {
+  text-align: center;
+  background: var(--bg-card);
+  padding: 48px 40px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  max-width: 400px;
+  width: 100%;
+}
+
+.login-logo {
+  font-size: 64px;
+  margin-bottom: 8px;
+}
+
+.login-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.login-subtitle {
+  color: var(--text-secondary);
+  font-size: 15px;
+  margin-bottom: 32px;
+}
+
+.login-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 24px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.github-btn {
+  background: #24292e;
+  color: #fff;
+}
+
+.github-btn:hover {
+  background: #1a1e22;
+}
+
+[data-theme="dark"] .github-btn {
+  background: #f0f0f0;
+  color: #24292e;
+}
+
+[data-theme="dark"] .github-btn:hover {
+  background: #fff;
+}
+
+/* ===== User Info in Dropdown ===== */
+.user-dropdown-info {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.user-info-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.user-dropdown-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0;
+}
+
 /* ===== App Layout ===== */
 .app {
   max-width: 720px;

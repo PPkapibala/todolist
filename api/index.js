@@ -4,21 +4,41 @@ const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY
-);
-
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
+
+function getSupabase(req) {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) return null;
+
+  return createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_KEY,
+    { global: { headers: { Authorization: `Bearer ${token}` } } }
+  );
+}
+
+function requireAuth(req, res, next) {
+  const supabase = getSupabase(req);
+  if (!supabase) {
+    return res.status(401).json({
+      success: false,
+      error: { code: 'UNAUTHORIZED', message: '请先登录' },
+    });
+  }
+  req.supabase = supabase;
+  next();
+}
 
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'Server is running' });
 });
 
+app.use('/api/todos', requireAuth);
+
 app.get('/api/todos/export', async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await req.supabase
       .from('todos')
       .select('*')
       .order('order', { ascending: true });
@@ -36,7 +56,7 @@ app.get('/api/todos/export', async (req, res) => {
 app.get('/api/todos', async (req, res) => {
   try {
     const { completed, category, search, due_today } = req.query;
-    let query = supabase.from('todos').select('*');
+    let query = req.supabase.from('todos').select('*');
 
     if (completed === 'true') query = query.eq('completed', true);
     else if (completed === 'false') query = query.eq('completed', false);
@@ -76,7 +96,15 @@ app.post('/api/todos/import', async (req, res) => {
       });
     }
 
-    const { data: maxRow } = await supabase
+    const { data: { user } } = await req.supabase.auth.getUser();
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'UNAUTHORIZED', message: '请先登录' },
+      });
+    }
+
+    const { data: maxRow } = await req.supabase
       .from('todos')
       .select('order')
       .order('order', { ascending: false })
@@ -92,9 +120,10 @@ app.post('/api/todos/import', async (req, res) => {
       category: t.category || '',
       due_date: t.due_date || t.dueDate || null,
       order: nextOrder++,
+      user_id: user.id,
     }));
 
-    const { data, error } = await supabase
+    const { data, error } = await req.supabase
       .from('todos')
       .insert(rows)
       .select();
@@ -124,7 +153,15 @@ app.post('/api/todos', async (req, res) => {
       });
     }
 
-    const { data: maxRow } = await supabase
+    const { data: { user } } = await req.supabase.auth.getUser();
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'UNAUTHORIZED', message: '请先登录' },
+      });
+    }
+
+    const { data: maxRow } = await req.supabase
       .from('todos')
       .select('order')
       .order('order', { ascending: false })
@@ -133,7 +170,7 @@ app.post('/api/todos', async (req, res) => {
 
     const nextOrder = maxRow ? maxRow.order + 1 : 0;
 
-    const { data, error } = await supabase
+    const { data, error } = await req.supabase
       .from('todos')
       .insert({
         content: content.trim(),
@@ -141,6 +178,7 @@ app.post('/api/todos', async (req, res) => {
         category: category || '',
         due_date: dueDate || null,
         order: nextOrder,
+        user_id: user.id,
       })
       .select()
       .single();
@@ -167,7 +205,7 @@ app.put('/api/todos/reorder', async (req, res) => {
     }
 
     const updates = items.map((item, index) =>
-      supabase.from('todos').update({ order: index }).eq('id', item.id)
+      req.supabase.from('todos').update({ order: index }).eq('id', item.id)
     );
     await Promise.all(updates);
 
@@ -191,7 +229,7 @@ app.put('/api/todos/:id', async (req, res) => {
     if (category !== undefined) updates.category = category;
     if (dueDate !== undefined) updates.due_date = dueDate;
 
-    const { data, error } = await supabase
+    const { data, error } = await req.supabase
       .from('todos')
       .update(updates)
       .eq('id', req.params.id)
@@ -218,7 +256,7 @@ app.put('/api/todos/:id', async (req, res) => {
 
 app.delete('/api/todos/completed', async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await req.supabase
       .from('todos')
       .delete()
       .eq('completed', true)
@@ -242,7 +280,7 @@ app.delete('/api/todos/completed', async (req, res) => {
 
 app.delete('/api/todos/:id', async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await req.supabase
       .from('todos')
       .delete()
       .eq('id', req.params.id)
