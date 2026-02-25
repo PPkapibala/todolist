@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="轻量级待办事项管理工具">
-  <meta name="theme-color" content="#4A90D9">
+  <meta name="theme-color" content="#FF6B6B">
   <title>TodoList - 待办事项</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✅</text></svg>">
@@ -23,84 +23,231 @@
     </div>
   </div>
 
-  <!-- App -->
+  <!-- App Shell -->
   <div id="app" class="app" style="display:none">
-    <!-- Header -->
-    <header class="header">
-      <div class="header-left">
-        <span class="header-logo">✅ TodoList</span>
+
+    <!-- Top Nav -->
+    <nav class="top-nav">
+      <button class="nav-item active" data-tab="home">🏠 首页</button>
+      <button class="nav-item" data-tab="todos">📋 任务</button>
+      <button class="nav-item" data-tab="stats">📊 统计</button>
+      <button class="nav-item" data-tab="profile">👤 我的</button>
+    </nav>
+
+    <!-- ========== TAB: Home ========== -->
+    <div id="tabHome" class="tab-page active">
+      <div class="home-header">
+        <div>
+          <h1 id="greeting" class="home-greeting">下午好</h1>
+          <p id="todayDate" class="home-date"></p>
+        </div>
+        <button id="homeAddBtn" class="home-add-btn" aria-label="添加任务">+</button>
       </div>
-      <div class="header-right">
-        <button id="themeToggle" class="theme-toggle" title="切换主题" aria-label="切换深色/浅色主题">🌙</button>
-        <div class="user-menu">
-          <button id="menuToggle" class="theme-toggle" title="更多" aria-label="菜单">⋮</button>
-          <div id="userDropdown" class="user-dropdown">
-            <div id="userInfo" class="user-dropdown-info"></div>
-            <button id="exportBtn" class="user-dropdown-item" type="button">📥 导出数据</button>
-            <button id="importBtn" class="user-dropdown-item" type="button">📤 导入数据</button>
-            <hr class="user-dropdown-divider">
-            <button id="logoutBtn" class="user-dropdown-item danger" type="button">🚪 退出登录</button>
+
+      <div class="home-progress-card">
+        <div class="home-progress-info">
+          <div class="home-progress-title">今日完成率</div>
+          <div id="homeProgressSub" class="home-progress-sub">0 / 0 已完成</div>
+        </div>
+        <div class="home-progress-ring">
+          <svg viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="6"/>
+            <circle id="homeRing" cx="40" cy="40" r="34" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6" transform="rotate(-90 40 40)"/>
+          </svg>
+          <div class="home-progress-pct">
+            <span id="homePct">0</span><small>%</small>
+            <div class="home-progress-label">今日</div>
           </div>
         </div>
       </div>
-    </header>
 
-    <!-- Add Todo -->
-    <div class="add-bar">
-      <input id="addInput" class="add-input" type="text" placeholder="添加新任务..." aria-label="输入任务内容" maxlength="500">
-      <button id="addBtn" class="add-btn" title="添加任务" aria-label="添加任务">+</button>
+      <div class="home-stats-grid">
+        <div class="home-stat-card">
+          <div class="home-stat-icon" style="background:#FFF0F0;color:#FF6B6B">🕐</div>
+          <div class="home-stat-title">总待办</div>
+          <div id="homeTotalCount" class="home-stat-value">0</div>
+          <div class="home-stat-desc">全部待办事项</div>
+        </div>
+        <div class="home-stat-card">
+          <div class="home-stat-icon" style="background:#E8FFF5;color:#00B894">✅</div>
+          <div class="home-stat-title">已完成</div>
+          <div id="homeDoneCount" class="home-stat-value">0</div>
+          <div class="home-stat-desc">累计完成数</div>
+        </div>
+        <div class="home-stat-card">
+          <div class="home-stat-icon" style="background:#FFF8E1;color:#FDCB6E">⏳</div>
+          <div class="home-stat-title">待完成</div>
+          <div id="homePendingCount" class="home-stat-value">0</div>
+          <div class="home-stat-desc">等待处理</div>
+        </div>
+        <div class="home-stat-card">
+          <div class="home-stat-icon" style="background:#E8F4FD;color:#74b9ff">📈</div>
+          <div class="home-stat-title">完成率</div>
+          <div id="homeRateText" class="home-stat-value">0%</div>
+          <div class="home-stat-desc">整体完成情况</div>
+        </div>
+      </div>
+
+      <div class="home-section-header">
+        <span>📅 今日待办</span>
+        <button id="homeViewAll" class="home-view-all">查看全部 ›</button>
+      </div>
+      <ul id="homeTodayList" class="todo-list"></ul>
+      <div id="homeTodayEmpty" class="empty-state-mini" style="display:none">
+        <span>🎉</span> 今日暂无待办，好好休息吧
+      </div>
     </div>
 
-    <div id="addOptions" class="add-options">
-      <select id="addPriority" aria-label="优先级">
-        <option value="medium">🟡 中优先级</option>
-        <option value="high">🔴 高优先级</option>
-        <option value="low">🟢 低优先级</option>
-      </select>
-      <select id="addCategory" aria-label="分类">
-        <option value="">无分类</option>
-        <option value="工作">💼 工作</option>
-        <option value="学习">📚 学习</option>
-        <option value="生活">🏠 生活</option>
-      </select>
-      <input id="addDueDate" type="datetime-local" aria-label="截止日期">
+    <!-- ========== TAB: Todos ========== -->
+    <div id="tabTodos" class="tab-page">
+      <div class="page-title">📋 全部任务</div>
+
+      <div class="add-bar">
+        <input id="addInput" class="add-input" type="text" placeholder="添加新任务..." aria-label="输入任务内容" maxlength="500">
+        <button id="addBtn" class="add-btn" title="添加任务" aria-label="添加任务">+</button>
+      </div>
+      <div id="addOptions" class="add-options">
+        <select id="addPriority" aria-label="优先级">
+          <option value="medium">🟡 中优先级</option>
+          <option value="high">🔴 高优先级</option>
+          <option value="low">🟢 低优先级</option>
+        </select>
+        <select id="addCategory" aria-label="分类">
+          <option value="">无分类</option>
+          <option value="工作">💼 工作</option>
+          <option value="学习">📚 学习</option>
+          <option value="生活">🏠 生活</option>
+        </select>
+        <input id="addDueDate" type="datetime-local" aria-label="截止日期">
+      </div>
+
+      <div class="search-bar">
+        <input id="searchInput" class="search-input" type="text" placeholder="搜索任务..." aria-label="搜索任务">
+      </div>
+
+      <div class="filters" role="tablist">
+        <button class="filter-btn active" data-filter="all" role="tab" aria-selected="true">全部</button>
+        <button class="filter-btn" data-filter="active" role="tab" aria-selected="false">未完成</button>
+        <button class="filter-btn" data-filter="completed" role="tab" aria-selected="false">已完成</button>
+      </div>
+
+      <div id="todoLoading" class="loading" style="display:none"><div class="spinner"></div></div>
+      <ul id="todoList" class="todo-list" aria-label="任务列表"></ul>
+      <div id="emptyState" class="empty-state" style="display:none">
+        <div class="empty-state-icon">📝</div>
+        <div class="empty-state-title">暂无任务</div>
+        <div class="empty-state-text">在上方输入框中添加你的第一个任务吧</div>
+      </div>
+      <div id="footer" class="footer" style="display:none">
+        <span id="todoStats">共 0 项，已完成 0 项</span>
+        <button id="clearCompletedBtn" class="footer-clear" type="button">清除已完成</button>
+      </div>
     </div>
 
-    <!-- View Tabs -->
-    <div class="view-tabs" role="tablist">
-      <button class="view-tab active" data-view="all" role="tab" aria-selected="true">📋 全部任务</button>
-      <button class="view-tab" data-view="today" role="tab" aria-selected="false">📅 今日待办</button>
+    <!-- ========== TAB: Stats ========== -->
+    <div id="tabStats" class="tab-page">
+      <div class="page-title">📊 数据统计</div>
+
+      <div class="stats-rate-card">
+        <div class="stats-rate-info">
+          <div class="stats-rate-title">总体完成率</div>
+          <div id="statsRateSub" class="stats-rate-sub">0 / 0 完成</div>
+        </div>
+        <div class="stats-rate-ring">
+          <svg viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="6"/>
+            <circle id="statsRing" cx="40" cy="40" r="34" fill="none" stroke="#FF6B6B" stroke-width="6" stroke-linecap="round" stroke-dasharray="213.6" stroke-dashoffset="213.6" transform="rotate(-90 40 40)"/>
+          </svg>
+          <div class="stats-rate-pct">
+            <span id="statsRatePct">0</span><small> %</small>
+            <div class="stats-rate-label">完成率</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-duo-grid">
+        <div class="stats-duo-card">
+          <div class="stats-duo-icon" style="color:#FF6B6B">🔥</div>
+          <div class="stats-duo-label">连续完成</div>
+          <div id="statsStreak" class="stats-duo-value">0天</div>
+        </div>
+        <div class="stats-duo-card">
+          <div class="stats-duo-icon" style="color:#FDCB6E">⏳</div>
+          <div class="stats-duo-label">待完成</div>
+          <div id="statsPending" class="stats-duo-value">0</div>
+        </div>
+      </div>
+
+      <div class="stats-section">
+        <div class="stats-section-title">📈 近7天完成趋势</div>
+        <div class="stats-chart">
+          <div id="weekChart" class="stats-bar-chart"></div>
+          <div id="weekLabels" class="stats-bar-labels"></div>
+        </div>
+      </div>
+
+      <div class="stats-trio-grid">
+        <div class="stats-trio-card">
+          <div class="stats-trio-icon">📅</div>
+          <div class="stats-trio-label">本月总计</div>
+          <div id="statsMonthTotal" class="stats-trio-value">0</div>
+          <div class="stats-trio-desc">任务数</div>
+        </div>
+        <div class="stats-trio-card">
+          <div class="stats-trio-icon">✅</div>
+          <div class="stats-trio-label">本月完成</div>
+          <div id="statsMonthDone" class="stats-trio-value">0</div>
+          <div class="stats-trio-desc">已完成</div>
+        </div>
+        <div class="stats-trio-card">
+          <div class="stats-trio-icon">📊</div>
+          <div class="stats-trio-label">月均完成率</div>
+          <div id="statsMonthRate" class="stats-trio-value">0%</div>
+          <div class="stats-trio-desc">平均</div>
+        </div>
+      </div>
     </div>
 
-    <!-- Search -->
-    <div class="search-bar">
-      <input id="searchInput" class="search-input" type="text" placeholder="搜索任务..." aria-label="搜索任务">
-    </div>
+    <!-- ========== TAB: Profile ========== -->
+    <div id="tabProfile" class="tab-page">
+      <div class="page-title">👤 个人中心</div>
 
-    <!-- Filters -->
-    <div class="filters" role="tablist">
-      <button class="filter-btn active" data-filter="all" role="tab" aria-selected="true">全部</button>
-      <button class="filter-btn" data-filter="active" role="tab" aria-selected="false">未完成</button>
-      <button class="filter-btn" data-filter="completed" role="tab" aria-selected="false">已完成</button>
-    </div>
+      <div class="profile-card">
+        <img id="profileAvatar" class="profile-avatar" src="" alt="">
+        <div id="profileName" class="profile-name">用户</div>
+        <div id="profileEmail" class="profile-email"></div>
+      </div>
 
-    <!-- Todo List -->
-    <div id="todoLoading" class="loading" style="display:none">
-      <div class="spinner"></div>
-    </div>
+      <div class="profile-section">
+        <div class="profile-section-title">设置</div>
+        <div class="profile-menu">
+          <button id="profileThemeBtn" class="profile-menu-item" type="button">
+            <span>🌙</span>
+            <span id="profileThemeText">深色模式</span>
+            <span class="profile-menu-arrow">›</span>
+          </button>
+        </div>
+      </div>
 
-    <ul id="todoList" class="todo-list" aria-label="任务列表"></ul>
+      <div class="profile-section">
+        <div class="profile-section-title">数据管理</div>
+        <div class="profile-menu">
+          <button id="profileExportBtn" class="profile-menu-item" type="button">
+            <span>📥</span><span>导出数据</span><span class="profile-menu-arrow">›</span>
+          </button>
+          <button id="profileImportBtn" class="profile-menu-item" type="button">
+            <span>📤</span><span>导入数据</span><span class="profile-menu-arrow">›</span>
+          </button>
+        </div>
+      </div>
 
-    <div id="emptyState" class="empty-state" style="display:none">
-      <div class="empty-state-icon">📝</div>
-      <div class="empty-state-title">暂无任务</div>
-      <div class="empty-state-text">在上方输入框中添加你的第一个任务吧</div>
-    </div>
-
-    <!-- Footer -->
-    <div id="footer" class="footer" style="display:none">
-      <span id="todoStats">共 0 项，已完成 0 项</span>
-      <button id="clearCompletedBtn" class="footer-clear" type="button">清除已完成</button>
+      <div class="profile-section">
+        <div class="profile-menu">
+          <button id="profileLogoutBtn" class="profile-menu-item danger" type="button">
+            <span>🚪</span><span>退出登录</span><span class="profile-menu-arrow">›</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -117,12 +264,11 @@
       <div id="confirmText" class="confirm-text"></div>
       <div class="confirm-actions">
         <button id="confirmCancel" class="confirm-btn cancel" type="button">取消</button>
-        <button id="confirmOk" class="confirm-btn danger" type="button">确认</button>
+        <button id="confirmOk" class="confirm-btn ok" type="button">确认</button>
       </div>
     </div>
   </div>
 
-  <!-- Hidden file input for import -->
   <input id="fileInput" type="file" accept=".json" style="display:none">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
