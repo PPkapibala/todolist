@@ -56,6 +56,11 @@
 [data-theme="dark"] .edit-dialog { background: var(--bg-card); }
 [data-theme="dark"] .confirm-btn.cancel { background: var(--border); color: var(--text-secondary); }
 [data-theme="dark"] .snackbar { background: #2D2D44; }
+[data-theme="dark"] .cal-task.priority-high { background: #3D1F1F; color: #FF8E8E; }
+[data-theme="dark"] .cal-task.priority-medium { background: #3D3520; color: #FDCB6E; }
+[data-theme="dark"] .cal-task.priority-low { background: #1F3D2A; color: #55EFC4; }
+[data-theme="dark"] .kanban-card { background: #1A1A2E; }
+[data-theme="dark"] .view-modes { background: var(--bg-card); }
 
 /* ===== Reset ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -299,6 +304,143 @@ ul { list-style: none; }
   background: var(--gradient);
   color: #fff;
   border-color: transparent;
+}
+
+/* View Modes */
+.view-modes {
+  display: flex; gap: 6px; margin-bottom: 14px;
+  background: var(--bg-card); border-radius: var(--radius-sm);
+  padding: 4px; box-shadow: var(--shadow);
+}
+.view-mode-btn {
+  flex: 1; padding: 7px 8px;
+  border-radius: 8px;
+  font-size: 12px; font-weight: 500;
+  color: var(--text-secondary);
+  transition: var(--transition);
+}
+.view-mode-btn.active {
+  background: var(--gradient);
+  color: #fff; font-weight: 600;
+  box-shadow: 0 2px 8px rgba(255,107,107,0.2);
+}
+
+/* ===== Calendar View ===== */
+.cal-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.cal-nav-btn {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  font-size: 20px; font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  box-shadow: var(--shadow);
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+}
+.cal-nav-btn:hover { color: var(--primary); }
+.cal-nav-title { font-size: 16px; font-weight: 700; }
+
+.cal-weekdays {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  text-align: center; font-size: 12px; color: var(--text-muted);
+  font-weight: 500; margin-bottom: 4px; padding: 6px 0;
+}
+.cal-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;
+}
+.cal-cell {
+  min-height: 64px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  padding: 4px;
+  font-size: 11px;
+  position: relative;
+  transition: var(--transition);
+}
+.cal-cell.other-month { opacity: 0.35; }
+.cal-cell.today { box-shadow: inset 0 0 0 2px var(--primary); }
+.cal-day {
+  font-size: 12px; font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+  text-align: center;
+}
+.cal-cell.today .cal-day { color: var(--primary); }
+.cal-task {
+  font-size: 10px; line-height: 1.3;
+  padding: 2px 4px; margin-bottom: 1px;
+  border-radius: 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.cal-task:hover { opacity: 0.8; }
+.cal-task.priority-high { background: #FFE0E0; color: #E55A5A; }
+.cal-task.priority-medium { background: #FFF3D6; color: #E17D12; }
+.cal-task.priority-low { background: #E0F7EC; color: #00A676; }
+.cal-task.completed { opacity: 0.4; text-decoration: line-through; }
+.cal-more {
+  font-size: 10px; color: var(--primary);
+  text-align: center; cursor: pointer;
+}
+
+/* ===== Kanban View ===== */
+.kanban-view {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.kanban-col {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow: var(--shadow);
+  min-height: 120px;
+}
+.kanban-col-header {
+  font-size: 14px; font-weight: 700;
+  margin-bottom: 10px; padding-bottom: 8px;
+  border-bottom: 2px solid var(--border);
+  display: flex; align-items: center; gap: 6px;
+}
+.kanban-col-header span { font-size: 16px; }
+.kanban-col-list { display: flex; flex-direction: column; gap: 6px; }
+.kanban-card {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+  border-left: 3px solid transparent;
+}
+.kanban-card:hover { transform: translateX(2px); }
+.kanban-card.priority-high { border-left-color: #FF6B6B; }
+.kanban-card.priority-medium { border-left-color: #FDCB6E; }
+.kanban-card.priority-low { border-left-color: #00B894; }
+.kanban-card.completed { opacity: 0.45; }
+.kanban-card.completed .kanban-card-text { text-decoration: line-through; }
+.kanban-card-text { margin-bottom: 4px; word-break: break-word; line-height: 1.4; }
+.kanban-card-meta {
+  display: flex; gap: 4px; align-items: center;
+  font-size: 10px; color: var(--text-muted);
+}
+.kanban-card-check {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 1.5px solid var(--text-muted);
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 10px; flex-shrink: 0;
+  transition: var(--transition);
+}
+.kanban-card.completed .kanban-card-check {
+  background: var(--gradient); border-color: transparent; color: #fff;
+}
+
+@media (max-width: 480px) {
+  .kanban-view { grid-template-columns: 1fr; }
+  .cal-cell { min-height: 48px; }
+  .cal-task { font-size: 9px; }
 }
 
 /* Todo List */

@@ -39,12 +39,20 @@
   const addDueDate = document.getElementById('addDueDate');
   const searchInput = document.getElementById('searchInput');
   const filterBtns = document.querySelectorAll('.filter-btn');
+  const viewModeBtns = document.querySelectorAll('.view-mode-btn');
+  const listView = document.getElementById('listView');
+  const calendarView = document.getElementById('calendarView');
+  const kanbanView = document.getElementById('kanbanView');
   const todoList = document.getElementById('todoList');
   const todoLoading = document.getElementById('todoLoading');
   const emptyState = document.getElementById('emptyState');
   const footer = document.getElementById('footer');
   const todoStats = document.getElementById('todoStats');
   const clearCompletedBtn = document.getElementById('clearCompletedBtn');
+  const calPrev = document.getElementById('calPrev');
+  const calNext = document.getElementById('calNext');
+  const calTitle = document.getElementById('calTitle');
+  const calGrid = document.getElementById('calGrid');
 
   // --- Stats DOM ---
   const statsRing = document.getElementById('statsRing');
@@ -97,6 +105,9 @@
   let confirmResolve = null;
   let currentTab = 'home';
   let editingTodoId = null;
+  let currentViewMode = 'list';
+  let calYear = new Date().getFullYear();
+  let calMonth = new Date().getMonth();
 
   // ========================= TAB SWITCHING =========================
   function switchTab(tab) {
@@ -216,8 +227,26 @@
     }
   }
 
+  // ========================= VIEW MODE =========================
+  function switchViewMode(mode) {
+    currentViewMode = mode;
+    viewModeBtns.forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+    listView.style.display = mode === 'list' ? '' : 'none';
+    calendarView.style.display = mode === 'calendar' ? '' : 'none';
+    kanbanView.style.display = mode === 'kanban' ? '' : 'none';
+    renderTodosView();
+  }
+
   // ========================= TODOS TAB =========================
-  function renderTodos() {
+  function renderTodosView() {
+    if (currentViewMode === 'list') renderListView();
+    else if (currentViewMode === 'calendar') renderCalendarView();
+    else if (currentViewMode === 'kanban') renderKanbanView();
+  }
+
+  function renderTodos() { renderTodosView(); }
+
+  function renderListView() {
     const todos = getFilteredTodos();
     todoList.innerHTML = '';
 
@@ -236,6 +265,138 @@
 
     todos.forEach(todo => {
       todoList.appendChild(createTodoEl(todo));
+    });
+  }
+
+  // ========================= CALENDAR VIEW =========================
+  function renderCalendarView() {
+    const year = calYear;
+    const month = calMonth;
+    const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    calTitle.textContent = `${year}年 ${monthNames[month]}`;
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const daysInPrev = new Date(year, month, 0).getDate();
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+    const todos = getFilteredTodos();
+    const todosByDate = {};
+    todos.forEach(t => {
+      if (!t.due_date) return;
+      const key = new Date(t.due_date).toISOString().slice(0, 10);
+      if (!todosByDate[key]) todosByDate[key] = [];
+      todosByDate[key].push(t);
+    });
+
+    calGrid.innerHTML = '';
+    const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+
+    for (let i = 0; i < totalCells; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell';
+      let dayNum, dateKey, isOtherMonth = false;
+
+      if (i < firstDay) {
+        dayNum = daysInPrev - firstDay + i + 1;
+        const pm = month === 0 ? 11 : month - 1;
+        const py = month === 0 ? year - 1 : year;
+        dateKey = `${py}-${String(pm+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+        isOtherMonth = true;
+      } else if (i - firstDay >= daysInMonth) {
+        dayNum = i - firstDay - daysInMonth + 1;
+        const nm = month === 11 ? 0 : month + 1;
+        const ny = month === 11 ? year + 1 : year;
+        dateKey = `${ny}-${String(nm+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+        isOtherMonth = true;
+      } else {
+        dayNum = i - firstDay + 1;
+        dateKey = `${year}-${String(month+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+      }
+
+      if (isOtherMonth) cell.classList.add('other-month');
+      if (dateKey === todayStr) cell.classList.add('today');
+
+      const dayEl = document.createElement('div');
+      dayEl.className = 'cal-day';
+      dayEl.textContent = dayNum;
+      cell.appendChild(dayEl);
+
+      const dayTodos = todosByDate[dateKey] || [];
+      const maxShow = 2;
+      dayTodos.slice(0, maxShow).forEach(t => {
+        const tag = document.createElement('div');
+        tag.className = `cal-task priority-${t.priority || 'medium'}${t.completed ? ' completed' : ''}`;
+        tag.textContent = t.content;
+        tag.addEventListener('click', () => openEditDialog(t));
+        cell.appendChild(tag);
+      });
+      if (dayTodos.length > maxShow) {
+        const more = document.createElement('div');
+        more.className = 'cal-more';
+        more.textContent = `+${dayTodos.length - maxShow}`;
+        cell.appendChild(more);
+      }
+
+      calGrid.appendChild(cell);
+    }
+  }
+
+  // ========================= KANBAN VIEW =========================
+  function renderKanbanView() {
+    const todos = getFilteredTodos();
+    const categories = ['工作', '学习', '生活', ''];
+    const cols = kanbanView.querySelectorAll('.kanban-col-list');
+
+    cols.forEach(col => {
+      col.innerHTML = '';
+      const cat = col.dataset.category;
+      const catTodos = todos.filter(t => {
+        if (cat === '') return !t.category || !categories.slice(0, 3).includes(t.category);
+        return t.category === cat;
+      });
+
+      if (catTodos.length === 0) {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'text-align:center;color:var(--text-muted);font-size:12px;padding:16px 0';
+        empty.textContent = '暂无任务';
+        col.appendChild(empty);
+        return;
+      }
+
+      catTodos.forEach(todo => {
+        const card = document.createElement('div');
+        card.className = `kanban-card priority-${todo.priority || 'medium'}${todo.completed ? ' completed' : ''}`;
+
+        const top = document.createElement('div');
+        top.style.cssText = 'display:flex;gap:8px;align-items:flex-start';
+
+        const check = document.createElement('span');
+        check.className = 'kanban-card-check';
+        check.innerHTML = todo.completed ? '✓' : '';
+        check.addEventListener('click', e => { e.stopPropagation(); toggleComplete(todo); });
+        top.appendChild(check);
+
+        const textWrap = document.createElement('div');
+        textWrap.style.flex = '1';
+        const text = document.createElement('div');
+        text.className = 'kanban-card-text';
+        text.textContent = todo.content;
+        textWrap.appendChild(text);
+
+        if (todo.due_date) {
+          const meta = document.createElement('div');
+          meta.className = 'kanban-card-meta';
+          meta.textContent = '📅 ' + fmtDate(new Date(todo.due_date));
+          textWrap.appendChild(meta);
+        }
+        top.appendChild(textWrap);
+        card.appendChild(top);
+
+        card.addEventListener('click', () => openEditDialog(todo));
+        col.appendChild(card);
+      });
     });
   }
 
@@ -715,8 +876,23 @@
         btn.classList.add('active');
         btn.setAttribute('aria-selected', 'true');
         currentFilter = btn.dataset.filter;
-        renderTodos();
+        renderTodosView();
       });
+    });
+
+    viewModeBtns.forEach(btn => {
+      btn.addEventListener('click', () => switchViewMode(btn.dataset.mode));
+    });
+
+    calPrev.addEventListener('click', () => {
+      calMonth--;
+      if (calMonth < 0) { calMonth = 11; calYear--; }
+      renderCalendarView();
+    });
+    calNext.addEventListener('click', () => {
+      calMonth++;
+      if (calMonth > 11) { calMonth = 0; calYear++; }
+      renderCalendarView();
     });
 
     let searchTimer = null;

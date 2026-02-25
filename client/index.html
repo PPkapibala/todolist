@@ -131,16 +131,58 @@
         <button class="filter-btn" data-filter="completed" role="tab" aria-selected="false">已完成</button>
       </div>
 
-      <div id="todoLoading" class="loading" style="display:none"><div class="spinner"></div></div>
-      <ul id="todoList" class="todo-list" aria-label="任务列表"></ul>
-      <div id="emptyState" class="empty-state" style="display:none">
-        <div class="empty-state-icon">📝</div>
-        <div class="empty-state-title">暂无任务</div>
-        <div class="empty-state-text">在上方输入框中添加你的第一个任务吧</div>
+      <div class="view-modes">
+        <button class="view-mode-btn active" data-mode="list">📋 列表</button>
+        <button class="view-mode-btn" data-mode="calendar">📅 日历</button>
+        <button class="view-mode-btn" data-mode="kanban">📊 看板</button>
       </div>
-      <div id="footer" class="footer" style="display:none">
-        <span id="todoStats">共 0 项，已完成 0 项</span>
-        <button id="clearCompletedBtn" class="footer-clear" type="button">清除已完成</button>
+
+      <!-- List View -->
+      <div id="listView">
+        <div id="todoLoading" class="loading" style="display:none"><div class="spinner"></div></div>
+        <ul id="todoList" class="todo-list" aria-label="任务列表"></ul>
+        <div id="emptyState" class="empty-state" style="display:none">
+          <div class="empty-state-icon">📝</div>
+          <div class="empty-state-title">暂无任务</div>
+          <div class="empty-state-text">在上方输入框中添加你的第一个任务吧</div>
+        </div>
+        <div id="footer" class="footer" style="display:none">
+          <span id="todoStats">共 0 项，已完成 0 项</span>
+          <button id="clearCompletedBtn" class="footer-clear" type="button">清除已完成</button>
+        </div>
+      </div>
+
+      <!-- Calendar View -->
+      <div id="calendarView" style="display:none">
+        <div class="cal-nav">
+          <button id="calPrev" class="cal-nav-btn">‹</button>
+          <span id="calTitle" class="cal-nav-title"></span>
+          <button id="calNext" class="cal-nav-btn">›</button>
+        </div>
+        <div class="cal-weekdays">
+          <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+        </div>
+        <div id="calGrid" class="cal-grid"></div>
+      </div>
+
+      <!-- Kanban View -->
+      <div id="kanbanView" class="kanban-view" style="display:none">
+        <div class="kanban-col" id="kanbanWork">
+          <div class="kanban-col-header"><span>💼</span> 工作</div>
+          <div class="kanban-col-list" data-category="工作"></div>
+        </div>
+        <div class="kanban-col" id="kanbanStudy">
+          <div class="kanban-col-header"><span>📚</span> 学习</div>
+          <div class="kanban-col-list" data-category="学习"></div>
+        </div>
+        <div class="kanban-col" id="kanbanLife">
+          <div class="kanban-col-header"><span>🏠</span> 生活</div>
+          <div class="kanban-col-list" data-category="生活"></div>
+        </div>
+        <div class="kanban-col" id="kanbanOther">
+          <div class="kanban-col-header"><span>📌</span> 其他</div>
+          <div class="kanban-col-list" data-category=""></div>
+        </div>
       </div>
     </div>
 
