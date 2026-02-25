@@ -26,6 +26,37 @@
   --nav-height: 56px;
 }
 
+/* ===== Dark Mode ===== */
+[data-theme="dark"] {
+  --bg: #1A1A2E;
+  --bg-card: #16213E;
+  --text: #EAEAEA;
+  --text-secondary: #A0A0B0;
+  --text-muted: #6C6C80;
+  --border: #2A2A40;
+  --shadow: 0 2px 16px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+[data-theme="dark"] .login-card { background: rgba(22, 33, 62, 0.95); }
+[data-theme="dark"] .todo-tag { background: #2A2A40; }
+[data-theme="dark"] .todo-tag.priority-high { background: #3D1F1F; color: #FF8E8E; }
+[data-theme="dark"] .todo-tag.priority-medium { background: #3D3520; color: #FDCB6E; }
+[data-theme="dark"] .todo-tag.priority-low { background: #1F3D2A; color: #55EFC4; }
+[data-theme="dark"] .todo-tag.category { background: #1F2D3D; color: #74B9FF; }
+[data-theme="dark"] .todo-tag.due { background: #2A2A40; color: #A0A0B0; }
+[data-theme="dark"] .todo-tag.overdue { background: #3D1F1F; color: #FF8E8E; }
+[data-theme="dark"] .filter-btn { background: var(--bg-card); border-color: var(--border); color: var(--text-secondary); }
+[data-theme="dark"] .add-input,
+[data-theme="dark"] .search-input { background: var(--bg-card); border-color: var(--border); color: var(--text); }
+[data-theme="dark"] .add-options select,
+[data-theme="dark"] .add-options input { background: var(--bg-card); border-color: var(--border); color: var(--text); }
+[data-theme="dark"] .edit-input,
+[data-theme="dark"] .edit-select { background: var(--bg); border-color: var(--border); color: var(--text); }
+[data-theme="dark"] .confirm-dialog,
+[data-theme="dark"] .edit-dialog { background: var(--bg-card); }
+[data-theme="dark"] .confirm-btn.cancel { background: var(--border); color: var(--text-secondary); }
+[data-theme="dark"] .snackbar { background: #2D2D44; }
+
 /* ===== Reset ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 16px; -webkit-tap-highlight-color: transparent; }

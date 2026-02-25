@@ -95,7 +95,6 @@
   let snackbarTimer = null;
   let lastDeletedTodo = null;
   let confirmResolve = null;
-  let dragItem = null;
   let currentTab = 'home';
   let editingTodoId = null;
 
@@ -109,6 +108,7 @@
       el.classList.toggle('active', key === tab);
     });
     if (tab === 'home') refreshHome();
+    if (tab === 'todos') renderTodos();
     if (tab === 'stats') refreshStats();
     if (tab === 'profile') refreshProfile();
   }
@@ -217,16 +217,6 @@
   }
 
   // ========================= TODOS TAB =========================
-  async function loadAndRenderTodos() {
-    todoLoading.style.display = 'flex';
-    todoList.innerHTML = '';
-    emptyState.style.display = 'none';
-    footer.style.display = 'none';
-    await loadAllTodos();
-    todoLoading.style.display = 'none';
-    renderTodos();
-  }
-
   function renderTodos() {
     const todos = getFilteredTodos();
     todoList.innerHTML = '';
@@ -302,6 +292,12 @@
 
     const actions = document.createElement('div');
     actions.className = 'todo-actions';
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'todo-action-btn';
+    editBtn.textContent = '✏️';
+    editBtn.addEventListener('click', () => openEditDialog(todo));
+    actions.appendChild(editBtn);
 
     const delBtn = document.createElement('button');
     delBtn.className = 'todo-action-btn';
@@ -413,6 +409,7 @@
 
     if (!updates.content) { showSnackbar('内容不能为空'); return; }
 
+    const todoId = editingTodoId;
     const backup = { content: todo.content, priority: todo.priority, category: todo.category, due_date: todo.due_date };
     todo.content = updates.content;
     todo.priority = updates.priority;
@@ -422,7 +419,7 @@
     refreshCurrentView();
 
     try {
-      await api.updateTodo(editingTodoId, updates);
+      await api.updateTodo(todoId, updates);
     } catch (err) {
       Object.assign(todo, backup);
       refreshCurrentView();
@@ -452,17 +449,25 @@
   async function handleUndo() {
     if (!lastDeletedTodo) return;
     hideSnackbar();
+    const restored = { ...lastDeletedTodo, id: 'temp-' + Date.now() };
+    allTodos.unshift(restored);
+    lastDeletedTodo = null;
+    refreshCurrentView();
+    showSnackbar('已撤销删除');
+
     try {
-      await api.createTodo({
-        content: lastDeletedTodo.content,
-        priority: lastDeletedTodo.priority,
-        category: lastDeletedTodo.category,
-        dueDate: lastDeletedTodo.due_date,
+      const res = await api.createTodo({
+        content: restored.content,
+        priority: restored.priority,
+        category: restored.category,
+        dueDate: restored.due_date,
       });
-      lastDeletedTodo = null;
-      await reloadData();
-      showSnackbar('已撤销删除');
+      const idx = allTodos.indexOf(restored);
+      if (idx !== -1 && res.data) allTodos[idx] = res.data;
     } catch (err) {
+      const idx = allTodos.indexOf(restored);
+      if (idx !== -1) allTodos.splice(idx, 1);
+      refreshCurrentView();
       showSnackbar('撤销失败：' + err.message);
     }
   }
@@ -470,11 +475,18 @@
   async function handleClearCompleted() {
     const ok = await showConfirm('清除已完成', '确定要删除所有已完成的任务吗？');
     if (!ok) return;
+
+    const backup = [...allTodos];
+    const removed = allTodos.filter(t => t.completed);
+    allTodos = allTodos.filter(t => !t.completed);
+    refreshCurrentView();
+    showSnackbar(`已删除 ${removed.length} 项已完成任务`);
+
     try {
-      const res = await api.clearCompleted();
-      showSnackbar(res.message);
-      await reloadData();
+      await api.clearCompleted();
     } catch (err) {
+      allTodos = backup;
+      refreshCurrentView();
       showSnackbar('操作失败：' + err.message);
     }
   }
@@ -657,6 +669,7 @@
     if (user) {
       if (user.avatar) {
         profileAvatar.src = user.avatar;
+        profileAvatar.alt = user.name || '';
         profileAvatar.style.display = '';
       } else {
         profileAvatar.style.display = 'none';
@@ -745,6 +758,12 @@
       if (e.target === confirmOverlay) closeConfirm(false);
     });
 
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.add-bar') && !e.target.closest('.add-options')) {
+        addOptions.classList.remove('visible');
+      }
+    });
+
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
         closeConfirm(false);
@@ -762,7 +781,9 @@
     const session = await auth.getSession();
     if (session) {
       showApp(session);
+      todoLoading.style.display = 'flex';
       await loadAllTodos();
+      todoLoading.style.display = 'none';
       refreshHome();
     } else {
       showLogin();
@@ -771,7 +792,9 @@
     auth.onAuthStateChange(async session => {
       if (session) {
         showApp(session);
+        todoLoading.style.display = 'flex';
         await loadAllTodos();
+        todoLoading.style.display = 'none';
         refreshHome();
       } else {
         showLogin();
