@@ -608,6 +608,21 @@ ul { list-style: none; }
   font-size: 11px; color: var(--text-muted);
 }
 
+/* Category Completion Ranking */
+.stats-category-list { display: flex; flex-direction: column; gap: 12px; }
+.stats-cat-row { display: flex; align-items: center; gap: 10px; }
+.stats-cat-label { width: 48px; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+.stats-cat-bar-bg {
+  flex: 1; height: 8px; background: var(--border);
+  border-radius: 4px; overflow: hidden;
+}
+.stats-cat-bar-fill {
+  height: 100%; border-radius: 4px;
+  background: var(--gradient);
+  transition: width 0.5s ease;
+}
+.stats-cat-count { font-size: 12px; color: var(--text-muted); width: 30px; text-align: right; }
+
 .stats-trio-grid {
   display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
 }

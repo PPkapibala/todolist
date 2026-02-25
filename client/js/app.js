@@ -285,7 +285,8 @@
     const todosByDate = {};
     todos.forEach(t => {
       if (!t.due_date) return;
-      const key = new Date(t.due_date).toISOString().slice(0, 10);
+      const dd = new Date(t.due_date);
+      const key = `${dd.getFullYear()}-${String(dd.getMonth()+1).padStart(2,'0')}-${String(dd.getDate()).padStart(2,'0')}`;
       if (!todosByDate[key]) todosByDate[key] = [];
       todosByDate[key].push(t);
     });
@@ -357,6 +358,13 @@
         return t.category === cat;
       });
 
+      catTodos.sort((a, b) => {
+        if (!a.due_date && !b.due_date) return 0;
+        if (!a.due_date) return 1;
+        if (!b.due_date) return -1;
+        return new Date(a.due_date) - new Date(b.due_date);
+      });
+
       if (catTodos.length === 0) {
         const empty = document.createElement('div');
         empty.style.cssText = 'text-align:center;color:var(--text-muted);font-size:12px;padding:16px 0';
@@ -388,7 +396,7 @@
         if (todo.due_date) {
           const meta = document.createElement('div');
           meta.className = 'kanban-card-meta';
-          meta.textContent = '📅 ' + fmtDate(new Date(todo.due_date));
+          meta.textContent = fmtDate(new Date(todo.due_date));
           textWrap.appendChild(meta);
         }
         top.appendChild(textWrap);
@@ -444,7 +452,7 @@
         dtag.textContent = '⚠ ' + fmtDate(dueDate);
       } else {
         dtag.className = 'todo-tag due';
-        dtag.textContent = '📅 ' + fmtDate(dueDate);
+        dtag.textContent = fmtDate(dueDate);
       }
       meta.appendChild(dtag);
     }
@@ -691,13 +699,37 @@
     statsMonthTotal.textContent = monthTodos.length;
     statsMonthDone.textContent = monthDone;
     statsMonthRate.textContent = monthRate + '%';
+
+    const catMap = {};
+    allTodos.forEach(t => {
+      const cat = t.category || '其他';
+      if (!catMap[cat]) catMap[cat] = { total: 0, done: 0 };
+      catMap[cat].total++;
+      if (t.completed) catMap[cat].done++;
+    });
+    const catList = Object.entries(catMap).sort((a, b) => b[1].done - a[1].done);
+    const catMax = Math.max(...catList.map(c => c[1].done), 1);
+    const statsCategoryList = document.getElementById('statsCategoryList');
+    statsCategoryList.innerHTML = '';
+    catList.forEach(([name, data]) => {
+      const row = document.createElement('div');
+      row.className = 'stats-cat-row';
+      row.innerHTML = `
+        <div class="stats-cat-label">${name}</div>
+        <div class="stats-cat-bar-bg">
+          <div class="stats-cat-bar-fill" style="width:${(data.done / catMax) * 100}%"></div>
+        </div>
+        <div class="stats-cat-count">${data.done}</div>
+      `;
+      statsCategoryList.appendChild(row);
+    });
   }
 
   function calcStreak() {
     const dateSet = new Set();
     allTodos.filter(t => t.completed).forEach(t => {
       const d = new Date(t.created_at || t.due_date);
-      if (d) dateSet.add(d.toISOString().slice(0, 10));
+      if (d) dateSet.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
     });
 
     let streak = 0;
@@ -705,7 +737,7 @@
     for (let i = 0; i < 365; i++) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
       if (dateSet.has(key)) streak++;
       else break;
     }
@@ -723,9 +755,10 @@
     for (let i = 6; i >= 0; i--) {
       const d = new Date(now);
       d.setDate(d.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
       const dayTodos = allTodos.filter(t => {
-        const created = new Date(t.created_at).toISOString().slice(0, 10);
+        const c = new Date(t.created_at);
+        const created = `${c.getFullYear()}-${String(c.getMonth()+1).padStart(2,'0')}-${String(c.getDate()).padStart(2,'0')}`;
         return created === key && t.completed;
       });
       counts.push(dayTodos.length);

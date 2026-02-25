@@ -89,7 +89,7 @@
       </div>
 
       <div class="home-section-header">
-        <span>📅 今日待办</span>
+        <span>今日待办</span>
         <button id="homeViewAll" class="home-view-all">查看全部 ›</button>
       </div>
       <ul id="homeTodayList" class="todo-list"></ul>
@@ -133,7 +133,7 @@
 
       <div class="view-modes">
         <button class="view-mode-btn active" data-mode="list">📋 列表</button>
-        <button class="view-mode-btn" data-mode="calendar">📅 日历</button>
+        <button class="view-mode-btn" data-mode="calendar">日历</button>
         <button class="view-mode-btn" data-mode="kanban">📊 看板</button>
       </div>
 
@@ -228,9 +228,14 @@
         </div>
       </div>
 
+      <div class="stats-section">
+        <div class="stats-section-title">分类完成情况</div>
+        <div id="statsCategoryList" class="stats-category-list"></div>
+      </div>
+
       <div class="stats-trio-grid">
         <div class="stats-trio-card">
-          <div class="stats-trio-icon">📅</div>
+          <div class="stats-trio-icon">日</div>
           <div class="stats-trio-label">本月总计</div>
           <div id="statsMonthTotal" class="stats-trio-value">0</div>
           <div class="stats-trio-desc">任务数</div>
