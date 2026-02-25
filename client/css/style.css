@@ -538,6 +538,31 @@ ul { list-style: none; }
 .confirm-btn.cancel { background: var(--border); color: var(--text-secondary); }
 .confirm-btn.ok { background: var(--gradient); color: #fff; }
 
+/* ===== Edit Dialog ===== */
+.edit-dialog {
+  background: var(--bg-card);
+  border-radius: 20px;
+  padding: 28px;
+  max-width: 400px; width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+.edit-dialog-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+.edit-field { margin-bottom: 14px; }
+.edit-label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; font-weight: 500; }
+.edit-input, .edit-select {
+  width: 100%; padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  font-size: 14px; color: var(--text);
+  outline: none;
+  transition: var(--transition);
+}
+.edit-input:focus, .edit-select:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(255,107,107,0.1); }
+.edit-row { display: flex; gap: 12px; }
+.edit-row .edit-field { flex: 1; }
+.edit-actions { display: flex; gap: 10px; margin-top: 20px; }
+
 /* ===== Responsive ===== */
 @media (max-width: 480px) {
   .app { max-width: 100%; }

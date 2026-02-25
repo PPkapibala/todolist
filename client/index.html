@@ -269,6 +269,44 @@
     </div>
   </div>
 
+  <!-- Edit Dialog -->
+  <div id="editOverlay" class="overlay" role="dialog" aria-modal="true">
+    <div class="edit-dialog">
+      <div class="edit-dialog-title">编辑任务</div>
+      <div class="edit-field">
+        <label class="edit-label">任务内容</label>
+        <input id="editContent" class="edit-input" type="text" maxlength="500">
+      </div>
+      <div class="edit-row">
+        <div class="edit-field">
+          <label class="edit-label">优先级</label>
+          <select id="editPriority" class="edit-select">
+            <option value="high">🔴 高</option>
+            <option value="medium">🟡 中</option>
+            <option value="low">🟢 低</option>
+          </select>
+        </div>
+        <div class="edit-field">
+          <label class="edit-label">分类</label>
+          <select id="editCategory" class="edit-select">
+            <option value="">无分类</option>
+            <option value="工作">💼 工作</option>
+            <option value="学习">📚 学习</option>
+            <option value="生活">🏠 生活</option>
+          </select>
+        </div>
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">截止日期</label>
+        <input id="editDueDate" class="edit-input" type="datetime-local">
+      </div>
+      <div class="edit-actions">
+        <button id="editCancel" class="confirm-btn cancel" type="button">取消</button>
+        <button id="editSave" class="confirm-btn ok" type="button">保存</button>
+      </div>
+    </div>
+  </div>
+
   <input id="fileInput" type="file" accept=".json" style="display:none">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>

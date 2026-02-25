@@ -68,6 +68,15 @@
   const profileImportBtn = document.getElementById('profileImportBtn');
   const profileLogoutBtn = document.getElementById('profileLogoutBtn');
 
+  // --- Edit Dialog DOM ---
+  const editOverlay = document.getElementById('editOverlay');
+  const editContent = document.getElementById('editContent');
+  const editPriority = document.getElementById('editPriority');
+  const editCategory = document.getElementById('editCategory');
+  const editDueDate = document.getElementById('editDueDate');
+  const editCancel = document.getElementById('editCancel');
+  const editSave = document.getElementById('editSave');
+
   // --- Global DOM ---
   const snackbar = document.getElementById('snackbar');
   const snackbarText = document.getElementById('snackbarText');
@@ -88,6 +97,7 @@
   let confirmResolve = null;
   let dragItem = null;
   let currentTab = 'home';
+  let editingTodoId = null;
 
   // ========================= TAB SWITCHING =========================
   function switchTab(tab) {
@@ -166,9 +176,9 @@
   function refreshHome() {
     const now = new Date();
     const hour = now.getHours();
-    if (hour < 12) greeting.textContent = '上午好 ☀️';
-    else if (hour < 18) greeting.textContent = '下午好 🌤️';
-    else greeting.textContent = '晚上好 🌙';
+    if (hour < 12) greeting.textContent = '上午好';
+    else if (hour < 18) greeting.textContent = '下午好';
+    else greeting.textContent = '晚上好';
 
     const weekNames = ['日', '一', '二', '三', '四', '五', '六'];
     todayDate.textContent = `${now.getMonth() + 1}月${now.getDate()}日 星期${weekNames[now.getDay()]}`;
@@ -255,7 +265,7 @@
     const text = document.createElement('div');
     text.className = 'todo-text';
     text.textContent = todo.content;
-    text.addEventListener('dblclick', () => startEdit(todo, text));
+    text.addEventListener('dblclick', () => openEditDialog(todo));
     content.appendChild(text);
 
     const meta = document.createElement('div');
@@ -318,76 +328,123 @@
   async function addTodo() {
     const content = addInput.value.trim();
     if (!content) return;
+
+    const tempTodo = {
+      id: 'temp-' + Date.now(),
+      content,
+      completed: false,
+      priority: addPriority.value,
+      category: addCategory.value,
+      due_date: addDueDate.value ? new Date(addDueDate.value).toISOString() : null,
+      created_at: new Date().toISOString(),
+    };
+
+    addInput.value = '';
+    addPriority.value = 'medium';
+    addCategory.value = '';
+    addDueDate.value = '';
+    addOptions.classList.remove('visible');
+
+    allTodos.unshift(tempTodo);
+    refreshCurrentView();
+
     try {
-      await api.createTodo({
-        content,
-        priority: addPriority.value,
-        category: addCategory.value,
-        dueDate: addDueDate.value ? new Date(addDueDate.value).toISOString() : null,
+      const res = await api.createTodo({
+        content: tempTodo.content,
+        priority: tempTodo.priority,
+        category: tempTodo.category,
+        dueDate: tempTodo.due_date,
       });
-      addInput.value = '';
-      addPriority.value = 'medium';
-      addCategory.value = '';
-      addDueDate.value = '';
-      addOptions.classList.remove('visible');
-      await reloadData();
+      const idx = allTodos.indexOf(tempTodo);
+      if (idx !== -1 && res.data) allTodos[idx] = res.data;
     } catch (err) {
+      const idx = allTodos.indexOf(tempTodo);
+      if (idx !== -1) allTodos.splice(idx, 1);
+      refreshCurrentView();
       showSnackbar('添加失败：' + err.message);
     }
   }
 
   async function toggleComplete(todo) {
+    const newVal = !todo.completed;
+    todo.completed = newVal;
+    refreshCurrentView();
     try {
-      await api.updateTodo(todo.id, { completed: !todo.completed });
-      await reloadData();
+      await api.updateTodo(todo.id, { completed: newVal });
     } catch (err) {
+      todo.completed = !newVal;
+      refreshCurrentView();
       showSnackbar('操作失败：' + err.message);
     }
   }
 
-  function startEdit(todo, textEl) {
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'add-input';
-    input.style.padding = '4px 8px';
-    input.style.fontSize = '14px';
-    input.value = todo.content;
-    input.maxLength = 500;
+  function openEditDialog(todo) {
+    editingTodoId = todo.id;
+    editContent.value = todo.content;
+    editPriority.value = todo.priority || 'medium';
+    editCategory.value = todo.category || '';
+    if (todo.due_date) {
+      const d = new Date(todo.due_date);
+      const offset = d.getTimezoneOffset() * 60000;
+      editDueDate.value = new Date(d - offset).toISOString().slice(0, 16);
+    } else {
+      editDueDate.value = '';
+    }
+    editOverlay.classList.add('show');
+    editContent.focus();
+  }
 
-    textEl.replaceWith(input);
-    input.focus();
-    input.select();
+  function closeEditDialog() {
+    editOverlay.classList.remove('show');
+    editingTodoId = null;
+  }
 
-    const save = async () => {
-      const val = input.value.trim();
-      if (val && val !== todo.content) {
-        try {
-          await api.updateTodo(todo.id, { content: val });
-          await reloadData();
-        } catch (err) {
-          showSnackbar('编辑失败：' + err.message);
-          input.replaceWith(textEl);
-        }
-      } else {
-        input.replaceWith(textEl);
-      }
+  async function saveEdit() {
+    if (!editingTodoId) return;
+    const todo = allTodos.find(t => t.id === editingTodoId);
+    if (!todo) return;
+
+    const updates = {
+      content: editContent.value.trim(),
+      priority: editPriority.value,
+      category: editCategory.value,
+      dueDate: editDueDate.value ? new Date(editDueDate.value).toISOString() : null,
     };
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter') save();
-      if (e.key === 'Escape') input.replaceWith(textEl);
-    });
-    input.addEventListener('blur', save);
+
+    if (!updates.content) { showSnackbar('内容不能为空'); return; }
+
+    const backup = { content: todo.content, priority: todo.priority, category: todo.category, due_date: todo.due_date };
+    todo.content = updates.content;
+    todo.priority = updates.priority;
+    todo.category = updates.category;
+    todo.due_date = updates.dueDate;
+    closeEditDialog();
+    refreshCurrentView();
+
+    try {
+      await api.updateTodo(editingTodoId, updates);
+    } catch (err) {
+      Object.assign(todo, backup);
+      refreshCurrentView();
+      showSnackbar('编辑失败：' + err.message);
+    }
   }
 
   async function handleDelete(todo) {
     const ok = await showConfirm('删除任务', `确定要删除「${todo.content}」吗？`);
     if (!ok) return;
+
+    const idx = allTodos.indexOf(todo);
+    allTodos.splice(idx, 1);
+    lastDeletedTodo = todo;
+    refreshCurrentView();
+    showSnackbar('任务已删除', true);
+
     try {
       await api.deleteTodo(todo.id);
-      lastDeletedTodo = todo;
-      showSnackbar('任务已删除', true);
-      await reloadData();
     } catch (err) {
+      allTodos.splice(idx, 0, todo);
+      refreshCurrentView();
       showSnackbar('删除失败：' + err.message);
     }
   }
@@ -422,11 +479,15 @@
     }
   }
 
-  async function reloadData() {
-    await loadAllTodos();
+  function refreshCurrentView() {
     if (currentTab === 'home') refreshHome();
     if (currentTab === 'todos') renderTodos();
     if (currentTab === 'stats') refreshStats();
+  }
+
+  async function reloadData() {
+    await loadAllTodos();
+    refreshCurrentView();
   }
 
   // ========================= STATS TAB =========================
@@ -666,6 +727,16 @@
       catch (err) { showSnackbar('退出失败：' + err.message); }
     });
 
+    // Edit dialog
+    editSave.addEventListener('click', saveEdit);
+    editCancel.addEventListener('click', closeEditDialog);
+    editOverlay.addEventListener('click', e => {
+      if (e.target === editOverlay) closeEditDialog();
+    });
+    editContent.addEventListener('keydown', e => {
+      if (e.key === 'Enter') saveEdit();
+    });
+
     // Global
     snackbarUndo.addEventListener('click', handleUndo);
     confirmCancel.addEventListener('click', () => closeConfirm(false));
@@ -677,6 +748,7 @@
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') {
         closeConfirm(false);
+        closeEditDialog();
         addOptions.classList.remove('visible');
       }
     });
